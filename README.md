@@ -66,7 +66,8 @@ This project demonstrates how AI can be integrated with workflow automation tool
 
 
 ### LinkedIn Post
-<img width="1918" height="970" alt="linkedin-post" src="https://github.com/user-attachments/assets/ed41ac55-50d0-45e5-9125-fd9d95c29014" />
+<img width="1247" height="1077" alt="linkedin-post" src="https://github.com/user-attachments/assets/15662ed2-6127-40cb-8caa-f0414b77a1d0" />
+
 
 
 ### Telegram Trigger
