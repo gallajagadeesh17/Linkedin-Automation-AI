@@ -1,0 +1,20 @@
+# n8n / local environment
+.env
+.env.*
+
+# Credentials and secrets
+*.pem
+*.key
+credentials.json
+secrets.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+
+# Logs
+*.log
