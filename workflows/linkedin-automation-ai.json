@@ -1,0 +1,359 @@
+{
+  "name": "Linkedin Automation AI",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an expert LinkedIn content creator.\n\nWrite a highly engaging LinkedIn post.\n\nFollow this EXACT structure.\n\n🚀 Hook\n\n(One short sentence.)\n\nBlank line\n\nExplain the topic in 2–3 short sentences.\n\nBlank line\n\n💡 Why it matters\n\n2 short sentences.\n\nBlank line\n\n✅ Key Benefits\n\n✅ Benefit 1\n\n✅ Benefit 2\n\n✅ Benefit 3\n\nBlank line\n\n📌 Key Takeaways\n\n✔ Takeaway 1\n\n✔ Takeaway 2\n\n✔ Takeaway 3\n\nBlank line\n\n❓Ask one engaging question.\n\nBlank line\n\n👇 Share your thoughts!\n\nBlank line\n\nAdd 8–10 relevant hashtags.\n\nRules:\n- Maximum 220 words.\n- Every paragraph should be 1–2 lines only.\n- Leave one blank line between every section.\n- No HTML.\n- No Markdown.\n- Output only the LinkedIn post.",
+        "options": {
+          "systemMessage": "You are a professional LinkedIn content writer.\n\nWrite an engaging LinkedIn post.\n\nRequirements:\n- Output ONLY plain text.\n- Never output the characters \\n or \\\\n.\n- Never output HTML.\n- Never output Markdown.\n- Never output JSON.\n- Use real blank lines by pressing Enter.\n- Keep paragraphs short.\n- Use emojis naturally.\n- End with a question.\n- Add 8-10 relevant hashtags.\n\nThe response should be directly ready to paste into LinkedIn."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [-2336, 304],
+      "id": "439ece5e-f69e-4b45-8887-84f97d952754",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6dbbd8d3-04c1-4b4b-a0c4-26813456e79e",
+              "name": "output",
+              "value": "={{ $json.original }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-1760, 304],
+      "id": "cbab337b-f9ca-4bc4-9b4e-091c83b7aff8",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "person": "YOUR_LINKEDIN_PERSON_ID",
+        "text": "={{ $('Edit Fields').item.json.output }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [-1024, 0],
+      "id": "d704725a-3572-4ae5-bd3b-ebada886e83f",
+      "name": "Create a post",
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "YOUR_LINKEDIN_CREDENTIAL_ID",
+          "name": "LinkedIn account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const post = $input.first().json.output;\n\nconsole.log(post);\nconsole.log(JSON.stringify(post));\n\nreturn [{\n  json: {\n    original: post,\n    containsLiteral: post.includes(\"\\\\n\"),\n    containsRealNewline: post.includes(\"\\n\"),\n    charCodes: [...post.slice(0, 50)].map(c => c.charCodeAt(0))\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-1984, 304],
+      "id": "a36c8c5c-f80c-4506-bb40-4e0076a209ca",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "sendTo": "YOUR_EMAIL",
+        "subject": "LinkedIn Post Approval",
+        "message": "={{ $json.output }}",
+        "responseType": "customForm",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Are you satisfied",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  { "option": "Yes" },
+                  { "option": "No" },
+                  { "option": "Regenerate" }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Edit post",
+              "placeholder": "write your changes"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [-1536, 304],
+      "id": "60bfb2a3-121d-47ee-bfb2-761dac1cb70f",
+      "name": "Send message and wait for response",
+      "webhookId": "YOUR_GMAIL_WAIT_WEBHOOK_ID",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_GMAIL_CREDENTIAL_ID",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 3 },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.data['Are you satisfied'] }}",
+                    "rightValue": "Yes",
+                    "operator": { "type": "string", "operation": "equals" },
+                    "id": "07f4d5da-1cd9-4337-9a87-cb5bbaf111dd"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 3 },
+                "conditions": [
+                  {
+                    "id": "b6623606-4310-476c-8e7e-5e081e906d72",
+                    "leftValue": "={{ $json.data['Are you satisfied'] }}",
+                    "rightValue": "Regenerate",
+                    "operator": { "type": "string", "operation": "equals", "name": "filter.operator.equals" }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 3 },
+                "conditions": [
+                  {
+                    "id": "74cf621e-33a2-43e0-b732-ee29373118f0",
+                    "leftValue": "={{ $json.data['Are you satisfied'] }}",
+                    "rightValue": "No",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [-1312, 288],
+      "id": "ba081dc8-8606-4f03-8f49-df66d416a48c",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "sendTo": "YOUR_EMAIL",
+        "subject": "LinkedIn Automation Response",
+        "emailType": "text",
+        "message": "Your LinkedIn post has been discarded. Whenever you're ready, send a new topic to generate another post."
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [160, 528],
+      "id": "a24c35bd-e56b-47b0-9af7-4028f717b98e",
+      "name": "Send a message",
+      "webhookId": "YOUR_DISCARD_WEBHOOK_ID",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_GMAIL_CREDENTIAL_ID",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a professional LinkedIn content writer.\n\nOriginal Post:\n{{ $('Code in JavaScript').item.json.original }}\n\nUser Feedback:\n{{ $('Send message and wait for response').item.json.data[\"Edit post\"] }}\n\nInstructions:\n- If the feedback is empty, generate a completely new LinkedIn post on the same topic.\n- If feedback is provided, rewrite the original post according to the user's instructions.\n- Keep the post professional and engaging.\n- Return only the final LinkedIn post.",
+        "options": {
+          "systemMessage": "=You are an expert LinkedIn content writer.\n\nYour task is to improve or regenerate a LinkedIn post.\n\nOriginal LinkedIn Post:\n{{ $('Code in JavaScript').item.json.original }}\n\nUser Feedback:\n{{ $('Send message and wait for response').item.json.data[\"Edit post\"] }}\n\nInstructions:\n- If the \"Edit post\" field is empty, generate a completely new LinkedIn post on the same topic.\n- If the user has provided feedback, rewrite the original post according to the user's instructions.\n- Make the content professional.\n- Keep paragraphs short.\n- Use emojis naturally.\n- Add 8–10 relevant hashtags.\n- End with an engaging question.\n\nReturn ONLY the LinkedIn post."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [-1088, 304],
+      "id": "0b589dee-435e-4244-bc82-b93993b1e4ed",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "jsCode": "let post = $json.output;\n\npost = post.replace(/\\\\n/g, \"\\n\");\n\nreturn [{\n  json:{\n    post\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-736, 304],
+      "id": "491a1d32-a392-4c20-9814-f46145b4642e",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "8d26c5fd-57f9-4e5a-ab03-67903fef457f", "name": "post", "value": "={{ $json.post }}", "type": "string" },
+            { "id": "7bab4ba5-4bf5-49ab-b098-5d13b400420d", "name": "topic", "value": "Original Topic", "type": "string" },
+            { "id": "b8276c2e-63c4-4d1d-8ec1-b51dd0dbab2c", "name": "email", "value": "User Email", "type": "string" }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-512, 304],
+      "id": "68c82eaa-a71e-46c3-b84a-bb36dcb9cc24",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "sendTo": "YOUR_EMAIL",
+        "subject": "Updated LinkedIn Post for Approval",
+        "message": "=Hello,\n\nYour LinkedIn post has been updated.\n\n{{ $json.post }}\n\nPlease choose one option.\nApprove\nNo\n\nThank you.",
+        "responseType": "customForm",
+        "formFields": { "values": [
+          {
+            "fieldLabel": "Now Are you satisfied",
+            "fieldType": "dropdown",
+            "fieldOptions": { "values": [{ "option": "Yes" }, { "option": "No" }] }
+          }
+        ] },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [-288, 304],
+      "id": "1b67110c-6bbe-42f5-bd2d-f1a9c16774fd",
+      "name": "Send message and wait for response1",
+      "webhookId": "YOUR_UPDATED_WAIT_WEBHOOK_ID",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_GMAIL_CREDENTIAL_ID",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 3 },
+          "conditions": [{
+            "id": "101b8352-9993-4226-8f7d-dcb49e9ce10f",
+            "leftValue": "={{ $json.data['Now Are you satisfied'] }}",
+            "rightValue": "Yes",
+            "operator": { "type": "string", "operation": "equals" }
+          }],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [-64, 304],
+      "id": "6ef1474e-f785-44ef-b5ed-6ca9779274cd",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "person": "YOUR_LINKEDIN_PERSON_ID",
+        "text": "={{ $('Edit Fields1').item.json.post }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [160, 256],
+      "id": "3c4ed7ea-c34a-4c0d-b5e7-d9543bfdbd07",
+      "name": "Updated post",
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "YOUR_LINKEDIN_CREDENTIAL_ID",
+          "name": "LinkedIn account"
+        }
+      }
+    },
+    {
+      "parameters": { "options": {} },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [-2560, 304],
+      "id": "eec516df-4bdf-4b71-8da0-027446a49d67",
+      "name": "When chat message received",
+      "webhookId": "YOUR_CHAT_TRIGGER_WEBHOOK_ID"
+    },
+    {
+      "parameters": { "options": {} },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [-2336, 528],
+      "id": "d70faf0b-7b24-4724-9cc4-51fcafcafb81",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": { "id": "YOUR_GEMINI_CREDENTIAL_ID", "name": "Google Gemini API account" }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [-2208, 528],
+      "id": "992f429a-8cc4-4193-9bbd-3095870d4e59",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": { "options": {} },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [-1024, 528],
+      "id": "ae07967a-c0fe-41d2-b91a-be84658ff01d",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": { "id": "YOUR_GEMINI_CREDENTIAL_ID", "name": "Google Gemini API account" }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "AI Agent": { "main": [[{ "node": "Code in JavaScript", "type": "main", "index": 0 }]] },
+    "Edit Fields": { "main": [[{ "node": "Send message and wait for response", "type": "main", "index": 0 }]] },
+    "Code in JavaScript": { "main": [[{ "node": "Edit Fields", "type": "main", "index": 0 }]] },
+    "Send message and wait for response": { "main": [[{ "node": "Switch", "type": "main", "index": 0 }]] },
+    "Switch": { "main": [
+      [{ "node": "Create a post", "type": "main", "index": 0 }],
+      [{ "node": "AI Agent1", "type": "main", "index": 0 }],
+      [{ "node": "Send a message", "type": "main", "index": 0 }]
+    ] },
+    "AI Agent1": { "main": [[{ "node": "Code in JavaScript1", "type": "main", "index": 0 }]] },
+    "Code in JavaScript1": { "main": [[{ "node": "Edit Fields1", "type": "main", "index": 0 }]] },
+    "Edit Fields1": { "main": [[{ "node": "Send message and wait for response1", "type": "main", "index": 0 }]] },
+    "Send message and wait for response1": { "main": [[{ "node": "If", "type": "main", "index": 0 }]] },
+    "If": { "main": [
+      [{ "node": "Updated post", "type": "main", "index": 0 }],
+      [{ "node": "Send a message", "type": "main", "index": 0 }]
+    ] },
+    "When chat message received": { "main": [[{ "node": "AI Agent", "type": "main", "index": 0 }]] },
+    "Google Gemini Chat Model": { "ai_languageModel": [[{ "node": "AI Agent", "type": "ai_languageModel", "index": 0 }]] },
+    "Simple Memory": { "ai_memory": [[{ "node": "AI Agent", "type": "ai_memory", "index": 0 }]] },
+    "Google Gemini Chat Model1": { "ai_languageModel": [[{ "node": "AI Agent1", "type": "ai_languageModel", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1", "binaryMode": "separate" },
+  "tags": []
+}
