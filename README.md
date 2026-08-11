@@ -291,7 +291,7 @@ These are proposed measurements, not metrics currently collected by the workflow
 
 ## 👨‍💻 Author
 
-**Jagadeesh Galla**
+**Galla jagadeesh**
 
 Built with **n8n + Google Gemini + Gmail + LinkedIn**.
 
